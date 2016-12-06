@@ -2,6 +2,8 @@ import React, { Component, PropTypes } from 'react';
 import { createContainer } from 'meteor/react-meteor-data';
 import ReactDOM from 'react-dom';
 
+import { Progress } from 'antd';
+
 import { Tasks } from '../api/tasks.js';
 
 import Task from './Task.js';
@@ -13,19 +15,35 @@ export class App extends Component {
 
     this.state = {
       hideCompleted: false,
-      gps: 1,
+      gps: { latitude: 1, longitude: 1},
     };
   }
-
+componentWillMount() {
+  console.log('componentWillMount'); this.getGPSInfo();
+}
+componentDidMount() {
+  console.log('componentDidMount'); //this.getGPSInfo();
+}
+shouldComponentUpdate() {
+  console.log('shouldComponentUpdate'); //this.getGPSInfo();
+  return true;
+}
+componentDidUpdate() {
+  console.log('componentDidUpdate'); //this.getGPSInfo();
+}
   handleSubmit(event) {
     event.preventDefault();
 
     // Find the text field via the React ref
     const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
-
+    var hashTagArr = text.match(/#(.*)+/g);
+    console.log(hashTagArr);
+    console.log(text);
     Tasks.insert({
       text,
       createdAt: new Date(), // current time
+      createdGPS: this.state.gps,
+      hashTags: hashTagArr,
     });
 
     // Clear form
@@ -42,8 +60,8 @@ export class App extends Component {
   getGPSInfo() {
     var displayValue;
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((postion) => {
-        this.setState({gps: postion.coords.latitude});
+      navigator.geolocation.getCurrentPosition((position) => {
+        this.setState({gps: { latitude: position.coords.latitude, longitude: position.coords.longitude}});
       });
       //alert('hurl1');
     }
@@ -66,7 +84,9 @@ export class App extends Component {
     return (
       <div className="container">
       <header>
-        <h1>Todo List {this.state.gps}</h1>
+        <h1>Toast it</h1>
+        <h6>{this.state.gps.latitude}</h6>
+        <h6>{this.state.gps.longitude}</h6>
         <label className="hide-completed">
           <input
             type="checkbox"
@@ -75,7 +95,9 @@ export class App extends Component {
             onClick={this.toggleHideCompleted.bind(this)}
           />
           Hide Completed Tasks
-        </label>
+        </label><br/>
+        <input type="button" value="100m"/><input type="button" value="300m"/><input type="button" value="500m"/><br/>
+        <input type="button" value="중고"/><input type="button" value="고백"/><input type="button" value="번개"/>
         <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
           <input
             type="text"
@@ -89,6 +111,7 @@ export class App extends Component {
           {this.renderTasks()}
         </ul>
       </div>
+
     );
   }
 }

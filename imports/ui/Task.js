@@ -33,6 +33,10 @@ export default class Task extends Component {
         />
 
         <span className="text">{this.props.task.text}</span>
+        <span className="text">{this.props.task.createdAt.toString()}</span>
+        <span className="text">{this.props.task.createdGPS.latitude}</span>
+        <span className="text">{this.props.task.createdGPS.longitude}</span>
+        <span className="text hashTags">{this.props.task.hashTags.toString()}</span>
       </li>
     );
   }

@@ -124,3 +124,8 @@ header .hide-completed {
     padding-bottom: 5px;
   }
 }
+
+.hashTags {
+  color: blue;
+  font-weight: bold;
+}
