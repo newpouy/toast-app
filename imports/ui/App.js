@@ -66,11 +66,30 @@ componentDidUpdate() {
       //alert('hurl1');
     }
   }
-  renderTasks() {
+
+  searchByTag(event) {
+    alert('hi');
+    console.log(event);
+  }
+
+
+  renderTasks(searchConditionTags) {
     let filteredTasks = this.props.tasks;
 
     if (this.state.hideCompleted) {
       filteredTasks = filteredTasks.filter(task => !task.checked);
+    }
+
+    for(selectedTag in searchConditionTags) {
+      filteredTasks = filteredTasks.filter(task => {
+        let result = false;
+        for ( savedTag in task.hashTags ) {
+            if(selectedTag === savedTag) {
+              result = true;
+            }
+        }
+        return result;
+      });
     }
 
     return filteredTasks.map((task) => (
@@ -97,7 +116,7 @@ componentDidUpdate() {
           Hide Completed Tasks
         </label><br/>
         <input type="button" value="100m"/><input type="button" value="300m"/><input type="button" value="500m"/><br/>
-        <input type="button" value="중고"/><input type="button" value="고백"/><input type="button" value="번개"/>
+        <input type="button" name="recycle" value="중고" onClick={this.searchByTag}/><input type="button" value="고백"/><input type="button" value="번개"/>
         <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
           <input
             type="text"
