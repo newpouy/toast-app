@@ -43,7 +43,7 @@ componentDidUpdate() {
       text,
       createdAt: new Date(), // current time
       createdGPS: this.state.gps,
-      hashTags: hashTagArr,
+      hashTags: hashTagArr.toString(),
     });
 
     // Clear form
