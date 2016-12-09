@@ -16,21 +16,23 @@ export class App extends Component {
     this.state = {
       hideCompleted: false,
       gps: { latitude: 1, longitude: 1},
+      searchConditionTags: [],
     };
+    this.searchByTag = this.searchByTag.bind(this); // by now, here, meteor's arrow function doesnt work. so do like this.
   }
-componentWillMount() {
-  console.log('componentWillMount'); this.getGPSInfo();
-}
-componentDidMount() {
-  console.log('componentDidMount'); //this.getGPSInfo();
-}
-shouldComponentUpdate() {
-  console.log('shouldComponentUpdate'); //this.getGPSInfo();
-  return true;
-}
-componentDidUpdate() {
-  console.log('componentDidUpdate'); //this.getGPSInfo();
-}
+  componentWillMount() {
+    console.log('componentWillMount'); this.getGPSInfo();
+  }
+  componentDidMount() {
+    console.log('componentDidMount'); //this.getGPSInfo();
+  }
+  shouldComponentUpdate() {
+    console.log('shouldComponentUpdate'); //this.getGPSInfo();
+    return true;
+  }
+  componentDidUpdate() {
+    console.log('componentDidUpdate'); //this.getGPSInfo();
+  }
   handleSubmit(event) {
     event.preventDefault();
 
@@ -67,31 +69,43 @@ componentDidUpdate() {
     }
   }
 
-  searchByTag(event) {
-    alert('hi');
-    console.log(event);
+  searchByTag (event) {
+    console.log(event.target.name);
+    let searchTag = event.target.name;
+    switch (searchTag) {
+      case 'recycle':
+        this.setState({searchConditionTags: ['중고']});
+        break;
+      default:
+
+    }
   }
 
 
-  renderTasks(searchConditionTags) {
+  renderTasks() {
     let filteredTasks = this.props.tasks;
 
     if (this.state.hideCompleted) {
       filteredTasks = filteredTasks.filter(task => !task.checked);
     }
-
-    for(selectedTag in searchConditionTags) {
-      filteredTasks = filteredTasks.filter(task => {
-        let result = false;
-        for ( savedTag in task.hashTags ) {
-            if(selectedTag === savedTag) {
-              result = true;
-            }
-        }
-        return result;
-      });
+    let searchConditionTags = this.state.searchConditionTags;
+    if(searchConditionTags.length>0){
+      for(index1 in searchConditionTags) {
+        filteredTasks = filteredTasks.filter(task => {
+          let result = false;
+          let hashTags = task.hashTags;
+          for ( index2 in hashTags ) {
+              if(searchConditionTags[index1] === hashTags[index2]) {
+                console.log('tag', searchConditionTags[index1], hashTags[index2]);
+                result = true;
+              }
+          }
+          console.log('result', result);
+          return result;
+        });
+      }
     }
-
+console.log(filteredTasks);
     return filteredTasks.map((task) => (
       <Task key={task._id} task={task} />
     ));
