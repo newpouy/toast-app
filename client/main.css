@@ -129,3 +129,8 @@ header .hide-completed {
   color: blue;
   font-weight: bold;
 }
+
+.distance {
+  color: red;
+  font-weight: bold;
+}

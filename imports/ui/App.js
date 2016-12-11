@@ -16,9 +16,13 @@ export class App extends Component {
     this.state = {
       hideCompleted: false,
       gps: { latitude: 1, longitude: 1},
-      searchConditionTags: [],
+      searchConditionTags: ['non'],
+      searchConditionDistance: 100,
     };
     this.searchByTag = this.searchByTag.bind(this); // by now, here, meteor's arrow function doesnt work. so do like this.
+    this.searchByDistance = this.searchByDistance.bind(this); // same as above
+    this.renderTasks = this.renderTasks.bind(this); // same as above
+    this.reset = this.reset.bind(this);
   }
   componentWillMount() {
     console.log('componentWillMount'); this.getGPSInfo();
@@ -37,22 +41,27 @@ export class App extends Component {
     event.preventDefault();
 
     // Find the text field via the React ref
-    const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
-    var hashTagArr = text.match(/#(.*)+/g);
-    console.log(hashTagArr);
-    console.log(text);
+    let text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
+
+    let hashTagArr = text.match(/#(.\S+)/g);
+    let hashRemovedHashTagArr = []
+    if(hashTagArr != null){
+      hashRemovedHashTagArr = hashTagArr.map(function(el){
+        return el.replace('#','');
+      })
+    }
     Tasks.insert({
       text,
       createdAt: new Date(), // current time
       createdGPS: this.state.gps,
-      hashTags: hashTagArr.toString(),
+      hashTags: hashRemovedHashTagArr,
     });
 
     // Clear form
     ReactDOM.findDOMNode(this.refs.textInput).value = '';
   }
 
-  toggleHideCompleted() {
+  getGps() {
     this.setState({
       hideCompleted: !this.state.hideCompleted,
     });
@@ -76,13 +85,42 @@ export class App extends Component {
       case 'recycle':
         this.setState({searchConditionTags: ['중고']});
         break;
+      case 'proposal':
+        this.setState({searchConditionTags: ['고백']});
+        break;
+      case 'instant':
+        this.setState({searchConditionTags: ['번개']});
+        break;
       default:
 
     }
   }
 
+  searchByDistance (event) {
+    console.log(event.target.name);
+    let searchDistance = Number(event.target.name);
+    this.setState({searchConditionDistance: searchDistance});
+  }
 
-  renderTasks() {
+  calculateDistance(lat1, lon1, lat2, lon2) {
+      var R = 6371; // km
+      var dLat = (lat2-lat1)* Math.PI / 180;
+      var dLon = (lon2-lon1)* Math.PI / 180;
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1* Math.PI / 180) * Math.cos(lat2* Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      var d = R * c;
+      return d;
+  }
+
+  reset () {
+    this.setState({
+      searchConditionDistance: 100,
+      searchConditionTags: ['non'],
+    });
+  }
+  renderTasks () {
     let filteredTasks = this.props.tasks;
 
     if (this.state.hideCompleted) {
@@ -91,24 +129,30 @@ export class App extends Component {
     let searchConditionTags = this.state.searchConditionTags;
     if(searchConditionTags.length>0){
       for(index1 in searchConditionTags) {
-        filteredTasks = filteredTasks.filter(task => {
+        filteredTasks = filteredTasks.map(task => {
+          task.distance = Math.round(1000 * this.calculateDistance(this.state.gps.latitude, this.state.gps.longitude, task.createdGPS.latitude, task.createdGPS.longitude));
+          return task;
+        }).filter(task => {
           let result = false;
           let hashTags = task.hashTags;
           for ( index2 in hashTags ) {
-              if(searchConditionTags[index1] === hashTags[index2]) {
-                console.log('tag', searchConditionTags[index1], hashTags[index2]);
-                result = true;
-              }
+            console.log('tag', searchConditionTags[index1], hashTags[index2], task.distance, this.state.searchConditionDistance);
+            if( (searchConditionTags[index1] == 'non'|| searchConditionTags[index1] == hashTags[index2])
+                && task.distance<this.state.searchConditionDistance) {
+              result = true;
+            }
           }
-          console.log('result', result);
           return result;
         });
       }
     }
-console.log(filteredTasks);
-    return filteredTasks.map((task) => (
-      <Task key={task._id} task={task} />
-    ));
+    // filteredTasks = filteredTasks.map(task => {
+    //   task.distance = this.calculateDistance(this.state.gps.latitude, this.state.gps.longitude, task.createdGPS.latitude, task.createdGPS.longitude);
+    // });
+    return filteredTasks.map((task) => {
+      let distance = 1;
+      return <Task key={task._id} task={task} distance={task.distance}/>
+    });
   }
 
   render() {
@@ -117,7 +161,7 @@ console.log(filteredTasks);
     return (
       <div className="container">
       <header>
-        <h1>Toast it</h1>
+        <h1>Toast itttt</h1>
         <h6>{this.state.gps.latitude}</h6>
         <h6>{this.state.gps.longitude}</h6>
         <label className="hide-completed">
@@ -125,12 +169,18 @@ console.log(filteredTasks);
             type="checkbox"
             readOnly
             checked={this.state.hideCompleted}
-            onClick={this.toggleHideCompleted.bind(this)}
+            onClick={this.getGps.bind(this)}
           />
-          Hide Completed Tasks
+          gps정보
         </label><br/>
-        <input type="button" value="100m"/><input type="button" value="300m"/><input type="button" value="500m"/><br/>
-        <input type="button" name="recycle" value="중고" onClick={this.searchByTag}/><input type="button" value="고백"/><input type="button" value="번개"/>
+        <input type="button" name="" value="reset" onClick={this.reset}/>
+        <input type="button" name="1" value="1m" onClick={this.searchByDistance}/>
+        <input type="button" name="3" value="3m" onClick={this.searchByDistance}/>
+        <input type="button" name="5" value="5m" onClick={this.searchByDistance}/>
+        <input type="button" name="10" value="10m" onClick={this.searchByDistance}/><br/>
+        <input type="button" name="recycle" value="중고" onClick={this.searchByTag}/>
+        <input type="button" name="proposal" value="고백" onClick={this.searchByTag}/>
+        <input type="button" name="instant" value="번개" onClick={this.searchByTag}/>
         <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
           <input
             type="text"
